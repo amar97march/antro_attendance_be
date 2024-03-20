@@ -1,11 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
         if not email:
@@ -28,7 +31,8 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(username, email, password, **extra_fields)
 
 class User(AbstractBaseUser):
-    username = models.CharField(max_length=150, unique=True)
+    # username = models.CharField(max_length=150, unique=True)
+    password = models.CharField(max_length=100) 
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
@@ -41,20 +45,21 @@ class User(AbstractBaseUser):
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'username'
+    USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['username','email', 'first_name', 'last_name', 'employee_id', 'department', 'position', 'hire_date','is_staff','is_active']
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'employee_id', 'department', 'position', 'hire_date','is_staff','is_active']
 
     def __str__(self):
-        return self.username
+        return self.email
 
 
 
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    check_in_time = models.DateTimeField()
-    check_out_time = models.DateTimeField(null=True, blank=True)
+    check_in = models.DateTimeField()
+    check_out = models.DateTimeField(null=True, blank=True)
     date = models.DateField()
+    
 
     def __str__(self):
         return f"{self.user.username} - {self.date}"
@@ -69,3 +74,4 @@ class LoginAPIView(APIView):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         })
+
