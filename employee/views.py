@@ -113,12 +113,14 @@ class UserCheck_in(APIView):
         print(request.user.id)
         user_obj = User.objects.get(id = request.user.id)
         today_date = date.today()  # Get the current date
-        check_in_object = Attendance.objects.filter(user=user_obj, date=today_date).exclude(check_out = None).first()
-        if not check_in_object:
+        check_in_object = Attendance.objects.filter(user=user_obj, date=today_date).first()
+        if check_in_object and check_in_object.check_out == None:
+            return Response({"status": 200, "message": "Already checked in"}, status=status.HTTP_200_OK)
+        elif check_in_object and check_in_object.check_out:
+            return Response({"status": 200, "message": "Already checked out"}, status=status.HTTP_200_OK)
+        else:
             Attendance.objects.create(user=user, date=today_date, check_in = datetime.now())
             return Response({"status": 200, "message": "check in successful"}, status=status.HTTP_200_OK)
-        else:
-             return Response({"status": 400, "message": "check in unsuccessful"}, status=status.HTTP_200_OK)
 
        
 

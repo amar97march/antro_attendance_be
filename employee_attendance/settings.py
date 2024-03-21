@@ -32,7 +32,6 @@ AUTH_USER_MODEL = "employee.User"
 # Application definition
 
 INSTALLED_APPS = [
-    'employee',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt.token_blacklist',
-   
+    'employee',
 ]
 
 MIDDLEWARE = [
