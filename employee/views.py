@@ -1,8 +1,7 @@
 from rest_framework import generics, permissions, status
-from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth.models import User  # Import User model
+# from django.contrib.auth.models import User  # Import User model
 from django.shortcuts import get_object_or_404
 from .models import Attendance
 from rest_framework.decorators import api_view, permission_classes
@@ -11,8 +10,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .serializers import AttendanceSerializer
-
-
+from django.contrib.auth import authenticate
+from .serializers import UserSerializer
+from rest_framework.authtoken.models import Token  # Import Token model
+from rest_framework_simplejwt.views import TokenViewBase
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import User
+import json
+from rest_framework_simplejwt.settings import api_settings
+from datetime import datetime, date
 
 class AttendanceListCreateAPIView(generics.ListCreateAPIView):
     """
@@ -34,7 +41,6 @@ class AttendanceDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AttendanceSerializer
     lookup_field = 'id'
 
-
 class UserRegistration(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -46,9 +52,15 @@ class UserRegistration(APIView):
             return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(username=username, password=password)
-        token, _ = Token.objects.get_or_create(user=user)  # Use Token
-        return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+        refresh = RefreshToken.for_user(user)
 
+        data =  {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        # print(Token,"Token")
+        # token, created = Token.objects.get_or_create(user=user)  # Corrected usage of Token.objects.get_or_create
+        return Response(data, status=status.HTTP_201_CREATED)
 
 class UserAttendanceListAPIView(APIView):
     """
@@ -83,27 +95,34 @@ class UserAttendanceDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def check_in(request):
-    serializer = AttendanceSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def check_in(request):
+#     data = request.data
+#     data["check_in"] = datetime.now()
+#     serializer = AttendanceSerializer(data=data)
+#     if serializer.is_valid():
+#         serializer.save(user=request.user)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UserCheck_in(APIView):
+    permission_classes = [IsAuthenticated,]
+    def post(self, request):
+        user = request.user
+        print(request.user.id)
+        user_obj = User.objects.get(id = request.user.id)
+        today_date = date.today()  # Get the current date
+        check_in_object = Attendance.objects.filter(user=user_obj, date=today_date).first()
+        if check_in_object and check_in_object.check_out == None:
+            return Response({"status": 200, "message": "Already checked in"}, status=status.HTTP_200_OK)
+        elif check_in_object and check_in_object.check_out:
+            return Response({"status": 200, "message": "Already checked out"}, status=status.HTTP_200_OK)
+        else:
+            Attendance.objects.create(user=user, date=today_date, check_in = datetime.now())
+            return Response({"status": 200, "message": "check in successful"}, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def check_out(request):
-    try:
-        attendance = Attendance.objects.get(user=request.user, check_out_time=None)
-    except Attendance.DoesNotExist:
-        return Response({"error": "No check-in found for the user"}, status=status.HTTP_400_BAD_REQUEST)
-
-    attendance.check_out()
-    serializer = AttendanceSerializer(attendance)
-    return Response(serializer.data)
+       
 
 
 @api_view(['GET'])
@@ -114,7 +133,7 @@ def attendance_history(request):
     return Response(serializer.data)
 
 
-class LoginAPIView(APIView):
+"""class LoginAPIView(APIView):
     def post(self, request):
         from .serializers import UserSerializer  # Import moved here to avoid circular dependency
         serializer = TokenObtainPairSerializer(data=request.data)
@@ -124,7 +143,28 @@ class LoginAPIView(APIView):
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-        })
+        })"""
+
+class UserLogin(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            # User is authenticated, generate token
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key}, status=status.HTTP_200_OK)
+        else:
+            # Invalid credentials
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class UserLogout(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self,request):
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_200_OK)    
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -150,7 +190,42 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+"""class LogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+ def post(self, request):
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            print(e)
+            return Response(status=status.HTTP_400_BAD_REQUEST)"""
+
+class TokenRefreshView(TokenViewBase):
+    """
+    Takes a refresh type JSON web token and returns an access type JSON web
+    token if the refresh token is valid.
+    """
+
+    _serializer_class = api_settings.TOKEN_REFRESH_SERIALIZER
 
 
+token_refresh = TokenRefreshView.as_view()
 
 
+@csrf_exempt
+def login(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+        try:
+            user = User.objects.get(username=username, password=password)
+            return JsonResponse({'message': 'Login successful'})
+        except User.DoesNotExist:
+            return JsonResponse({'message': 'Invalid credentials'}, status=400)
+    else:
+        return JsonResponse({'message': 'Method not allowed'}, status=405)
