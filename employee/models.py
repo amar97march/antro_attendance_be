@@ -33,7 +33,7 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     # username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=100) 
+
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
@@ -59,9 +59,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    check_in = models.DateTimeField()
-    check_out = models.DateTimeField(null=True, blank=True)
     date = models.DateField()
+    check_in = models.DateTimeField()
+    check_out = models.DateTimeField()
+    tasks = models.TextField(max_length = 100)
     
 
     def __str__(self):
