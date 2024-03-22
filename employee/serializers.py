@@ -10,8 +10,8 @@ class UserSerializer(serializers.ModelSerializer):
 class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
-        fields = ['user', 'check_in_time', 'check_out_time', 'date']
-        read_only_fields = [ 'user', 'check_in_time', 'check_out_time', 'date']
+        fields = ['user', 'date','check_in', 'check_out', 'tasks']
+        read_only_fields = [ 'user','date', 'check_in', 'check_out', 'tasks']
 
 
 

@@ -43,24 +43,31 @@ class AttendanceDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 class UserRegistration(APIView):
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        if not username or not password:
-            return Response({'error': 'Username and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            email = request.data.get('email')
+            password = request.data.get('password')
+            emp_id = request.data.get('emp_id')
+            if not email or not password:
+                return Response({'error': 'email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if User.objects.filter(username=username).exists():
-            return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            if User.objects.filter(email=email).exists():
+                return Response({'error': 'email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.create_user(email=email, employee_id=emp_id)
+            user.set_password(password)
+            user.save()
 
-        user = User.objects.create_user(username=username, password=password)
-        refresh = RefreshToken.for_user(user)
+            data = {
+                'status': 200,
+                'message': 'user registered'
+            }
 
-        data =  {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-        # print(Token,"Token")
-        # token, created = Token.objects.get_or_create(user=user)  # Corrected usage of Token.objects.get_or_create
-        return Response(data, status=status.HTTP_201_CREATED)
+            return Response(data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'message': 'user not registered'}, status=400)
+
+
+
 
 class UserAttendanceListAPIView(APIView):
     """
@@ -107,7 +114,7 @@ class UserAttendanceDetailAPIView(APIView):
 #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserCheck_in(APIView):
-    permission_classes = [IsAuthenticated,]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         user = request.user
         print(request.user.id)
@@ -122,16 +129,84 @@ class UserCheck_in(APIView):
             Attendance.objects.create(user=user, date=today_date, check_in = datetime.now())
             return Response({"status": 200, "message": "check in successful"}, status=status.HTTP_200_OK)
 
-       
+ 
+class Usercheck_out(APIView):
+    def post(self, request):
+        user = request.user
+        today_date = datetime.now().date()
+        tasks = request.data.get('tasks')
+        try:
+            attendance_obj = Attendance.objects.filter(user=user, date=today_date, check_in__isnull=False, check_out__isnull=True).first()
+            if attendance_obj:
+                if tasks:
+                    attendance_obj.tasks = tasks
+                    # Assuming default check-out time is current time
+                    attendance_obj.check_out = datetime.now() 
+                    attendance_obj.save()
+                    return Response({"message": "Checkout successful"})
+                else:
+                    return Response({'error': 'Tasks not provided'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'error': 'No check-in found for today'}, status=status.HTTP_400_BAD_REQUEST)
+        except Attendance.DoesNotExist:
+            return Response({'error': 'No check-in found for today'}, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
+
+class Attendance_history(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Get the authenticated user
+            user = request.user
+            
+            # Filter attendance records for the authenticated user
+            attendances = Attendance.objects.filter(user=user)
+            
+            # Serialize the attendance records
+            serializer = AttendanceSerializer(attendances, many=True)
+            
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+"""class Attendance_history(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request):
+        try:
+            employee_id = request.user.id 
+            user = request.user
+            today_date = datetime.now().date()
+            check_in = request.data.get('check_in')
+            check_out = request.data.get('check_out')
+            tasks = request.data.get('tasks')
+            date_str = request.query_params.get('date', None)
+
+            if date_str:
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            else:
+                date_obj = date.today()
+                attendances = Attendance.objects.filter(user__employee_id=employee_id, user = user ,check_in__isnull=False,check_out__isnull = True, date=date_obj)
+        
+        # Serialize the attendance records
+                serializer = AttendanceSerializer(attendances, many=True)
+        
+                return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        """
+
+'''
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def attendance_history(request):
     attendances = Attendance.objects.filter(user=request.user)
     serializer = AttendanceSerializer(attendances, many=True)
     return Response(serializer.data)
-
+'''
 
 """class LoginAPIView(APIView):
     def post(self, request):
@@ -147,13 +222,18 @@ def attendance_history(request):
 
 class UserLogin(APIView):
     def post(self, request):
-        username = request.data.get('username')
+        #username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password')
-        user = authenticate(username=username, password=password)
+        user = authenticate(email=email, password=password)
         if user is not None:
-            # User is authenticated, generate token
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            # User is authenticated, generate tokenrefresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+            #token, created = Token.objects.get_or_create(user=user)
+            #return Response({'token': token.key}, status=status.HTTP_200_OK)
         else:
             # Invalid credentials
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -162,7 +242,10 @@ class UserLogout(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self,request):
-        request.user.auth_token.delete()
+        try:
+            request.user.auth_token.delete()
+        except Token.DoesNotExist:
+            pass
         return Response(status=status.HTTP_200_OK)    
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

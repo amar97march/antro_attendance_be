@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -52,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'employee.middleware.IPAddressRestrictionMiddleware',
 ]
 
 ROOT_URLCONF = 'employee_attendance.urls'
@@ -90,9 +91,9 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'emp_db',
-       'USER': 'emp_root',
-       'PASSWORD': 'pass12345',
+       'NAME': 'empdb',
+       'USER': 'empdbuser',
+       'PASSWORD': 'password',
        'HOST': 'localhost',
        'PORT': '5432',
    }
@@ -139,4 +140,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# settings.py
+
+# Configure JWT access token expiration time
+# By default, it's set to expire in 15 minutes
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7)
+    # Add other settings as needed
+}
 
