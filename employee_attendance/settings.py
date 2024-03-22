@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -90,9 +90,9 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'emp_db',
-       'USER': 'emp_root',
-       'PASSWORD': 'pass12345',
+       'NAME': 'emdb',
+       'USER': 'emuser',
+       'PASSWORD': '123456',
        'HOST': 'localhost',
        'PORT': '5432',
    }
@@ -140,3 +140,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SIMPLLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME' : timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME' : timedelta(days=7)
+}
