@@ -1,6 +1,14 @@
 from django.http import HttpResponseForbidden
 
 class IPAddressRestrictionMiddleware:
+
+    """
+    Middleware to restrict access based on IP address.
+
+    This middleware allows only requests from a specific IP address.
+    """  
+
+
     def __init__(self, get_response):
         self.get_response = get_response
 
