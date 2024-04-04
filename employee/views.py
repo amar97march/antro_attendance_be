@@ -20,6 +20,13 @@ import json
 from rest_framework_simplejwt.settings import api_settings
 from datetime import datetime, date
 from rest_framework import status
+from .models import Holiday
+from .serializers import HolidaySerializer
+from rest_framework import generics
+from rest_framework.response import Response
+import holidays
+from rest_framework import viewsets
+
 
 
 
@@ -170,6 +177,22 @@ class TodayAttendance(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# holidays_api/views.py
+
+class HolidayListView(APIView):
+    def get(self, request, year):
+        try:
+            # Get the list of holidays for the specified year
+            holiday_list = holidays.CountryHoliday('US', years=[year])
+            # Serialize the holiday data
+            serializer = HolidaySerializer([
+                {'date': date, 'name': name} for  date , name in holiday_list.items()
+            ], many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -284,3 +307,5 @@ def login(request):
             return JsonResponse({'message': 'Invalid credentials'}, status=400)
     else:
         return JsonResponse({'message': 'Method not allowed'}, status=405)
+
+

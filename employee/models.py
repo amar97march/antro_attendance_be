@@ -63,6 +63,11 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.date}"
+class Holiday(models.Model):
+    date = models.DateField()
+    name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
 
 

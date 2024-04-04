@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from .models import Holiday
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,5 +14,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
         fields = ['user', 'check_in_time', 'check_out_time', 'date',"tasks"]
         read_only_fields = [ 'user', 'check_in_time', 'check_out_time', 'date',"tasks"]
 
+class HolidaySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    name = serializers.CharField()
 
 
