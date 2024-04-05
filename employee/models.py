@@ -33,7 +33,7 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     # username = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=100) 
+   
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
@@ -44,37 +44,29 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-
+    hometown = models.CharField(default= False)
+    qualification = models.CharField(default = False)
+    hobbies = models.CharField(default = False)
+    image = models.ImageField(upload_to='user_images/', height_field=None, width_field=None, max_length=None)
     objects = CustomUserManager()
+    
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'employee_id', 'department', 'position', 'hire_date','is_staff','is_active']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'employee_id', 'department', 'position', 'hire_date','is_staff','is_active','hometown','qualification','hobbies','image']
 
     def __str__(self):
         return self.email
     
-
-
-
 class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     check_in = models.DateTimeField()
     check_out = models.DateTimeField(null=True, blank=True)
     date = models.DateField()
-    
-
+    todays_tasks = models.TextField(null=True, blank=True) 
+    tomorrow_tasks = models.TextField(null=True, blank=True)
+    today_tasks_status = models.TextField(null = True,blank = True)
     def __str__(self):
         return f"{self.user.email} - {self.date}"
 
-# class LoginAPIView(APIView):
-#     def post(self, request):
-#         serializer = TokenObtainPairSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         user = serializer.validated_data['user']
-#         refresh = RefreshToken.for_user(user)
-#         return Response({
-#             'refresh': str(refresh),
-#             'access': str(refresh.access_token),
-#         })
 

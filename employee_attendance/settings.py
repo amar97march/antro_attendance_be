@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+from datetime import timedelta 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -52,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'employee.middleware.IPAddressRestrictionMiddleware',
 ]
 
 ROOT_URLCONF = 'employee_attendance.urls'
@@ -90,9 +94,9 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'emp_db',
-       'USER': 'emp_root',
-       'PASSWORD': 'pass12345',
+       'NAME': 'empdb1',
+       'USER': 'empuser1',
+       'PASSWORD': 'password',
        'HOST': 'localhost',
        'PORT': '5432',
    }
@@ -134,9 +138,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7)
+    # Add other settings as needed
+}
