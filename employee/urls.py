@@ -1,6 +1,6 @@
 from . import views
 from django.urls import path
-from .views import UserRegistration, AttendanceListCreateAPIView, UserCheck_in, UserCheck_Out,UserLogin, UserLogout,TodayAttendance,HolidayListView
+from .views import UserRegistration, AttendanceListCreateAPIView, UserCheck_in, UserCheck_Out,UserLogin,TodayAttendance,HolidayListView,SummaryAverageHours
 app_name = 'attendance'
 
 urlpatterns = [
@@ -13,6 +13,8 @@ urlpatterns = [
     path('holidays/<int:year>/', HolidayListView.as_view(), name='holiday-list'),
     path('register/', UserRegistration.as_view(), name='User_Registration'),
     path('attendance/', AttendanceListCreateAPIView.as_view(), name='attendance'),
+    path('api/summary-average-hours/', SummaryAverageHours.as_view(), name='summary-average-hours'),
+
 ]
 
 
