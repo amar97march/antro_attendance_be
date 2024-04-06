@@ -1,11 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 # from django.contrib.auth.models import User
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework_simplejwt.tokens import RefreshToken
-# from rest_framework import status
-# from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import status
+from django.utils import timezone
 # from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
@@ -57,12 +57,25 @@ class Attendance(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     check_in = models.DateTimeField()
     check_out = models.DateTimeField(null=True, blank=True)
-    tasks = models.TextField(max_length = 100)
+    today_tasks = models.TextField(null=True,blank=True)
+    tomorrow_tasks = models.TextField(null=True,blank=True)
+    today_tasks_status = models.TextField(null=True,blank=True)
     date = models.DateField()
     
 
     def __str__(self):
         return f"{self.user.email} - {self.date}"
+    
+
+class Holiday(models.Model):
+    date = models.DateField()
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 
 
+# class Employee(models.Model):
+#     employee_id = models.CharField(max_length=20, unique=True)
+#     working_hours = models.DecimalField(max_digits=5, decimal_places=2)
