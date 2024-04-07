@@ -60,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     Custom user model representing a user of the application.
     """
     # username = models.CharField(max_length=150, unique=True)
-
+   
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
@@ -76,6 +76,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     hobbies = models.CharField(default = False)
     image = models.ImageField(upload_to='user_images/', height_field=None, width_field=None, max_length=None)
     objects = CustomUserManager()
+    
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
@@ -84,9 +85,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
-
-
-
 class Attendance(models.Model):
 
     """
@@ -94,13 +92,10 @@ class Attendance(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
-    check_in = models.DateTimeField()
-    check_out = models.DateTimeField(default=datetime.now)
-
-    #check_out = models.DateTimeField(null = True)
-    tasks = models.TextField(max_length = 100)
+    check_in = models.DateTimeField(default=datetime.now)
+    check_out = models.DateTimeField(null = True, blank = True)
+    todays_tasks = models.TextField(null=True, blank=True) 
+    tomorrow_tasks = models.TextField(null=True, blank=True)
     
-
     def __str__(self):
         return f"{self.user.email} - {self.date}"
-

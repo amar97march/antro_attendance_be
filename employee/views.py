@@ -20,11 +20,13 @@ from django.views.decorators.csrf import csrf_exempt
 #from .models import User
 import json
 from rest_framework_simplejwt.settings import api_settings
-from datetime import datetime, date
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from .models import Attendance, User
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from employee.models import User
+from rest_framework import status
+from django.utils import timezone
+from datetime import date, datetime, timedelta
 
 
 
@@ -81,8 +83,6 @@ class UserRegistration(APIView):
 
 
 
-
-
 class UserAttendanceListAPIView(APIView):
     """
     API view to list all attendance records for a specific user.
@@ -131,16 +131,7 @@ class UserAttendanceDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def check_in(request):
-#     data = request.data
-#     data["check_in"] = datetime.now()
-#     serializer = AttendanceSerializer(data=data)
-#     if serializer.is_valid():
-#         serializer.save(user=request.user)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserCheck_in(APIView):
 
@@ -156,54 +147,65 @@ class UserCheck_in(APIView):
         """
 
         user = request.user
-        print(request.user.id)
-        user_obj = User.objects.get(id = request.user.id)
+        user_obj = User.objects.get(id=request.user.id)
         today_date = date.today()  # Get the current date
+        yesterday_date = today_date - timedelta(days=1)  # Get yesterday's date
+
+        # Fetch today's tasks based on yesterday's date
+        today_tasks = Attendance.objects.filter(user=user_obj, date=yesterday_date).values_list('tomorrow_tasks', flat=True).first()
+
+        # If there are no tasks from yesterday, set today's tasks to an empty string
+        if today_tasks is None:
+            today_tasks = ''
+
+        # Check if the user has already checked in today
         check_in_object = Attendance.objects.filter(user=user_obj, date=today_date).first()
+
         if check_in_object and check_in_object.check_out == None:
             return Response({"status": 200, "message": "Already checked in"}, status=status.HTTP_200_OK)
         elif check_in_object and check_in_object.check_out:
             return Response({"status": 200, "message": "Already checked out"}, status=status.HTTP_200_OK)
         else:
-            Attendance.objects.create(user=user, date=today_date, check_in = datetime.now())
-            return Response({"status": 200, "message": "check in successful"}, status=status.HTTP_200_OK)
-
- 
-class Usercheck_out(APIView):
+            # Create a new Attendance object for check-in
+            Attendance.objects.create(user=user, date=today_date, check_in=datetime.now(), tomorrow_tasks=today_tasks)
+            return Response({"status": 200, "message": "Check-in successful", "today_tasks": today_tasks}, status=status.HTTP_200_OK)
 
 
+class UserCheck_Out(APIView):
     """
     API view to handle user check-out.
     """
-
     def post(self, request):
-
         """
         Handle user check-out.
         """
-
         user = request.user
         today_date = datetime.now().date()
-        tasks = request.data.get('tasks')
+        todays_tasks = request.data.get('todays_tasks')
+        tomorrow_tasks = request.data.get('tomorrow_tasks')
+        today_tasks_status = request.data.get('today_tasks_status')
+
+        if not all([todays_tasks, tomorrow_tasks, today_tasks_status]):
+            return Response({'error': 'Fields cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
+            # Check if there's an existing check-in for today
             attendance_obj = Attendance.objects.filter(user=user, date=today_date, check_in__isnull=False).first()
             if attendance_obj:
                 if attendance_obj.check_out:
-                    return Response({'error': 'Already checked in'}, status=status.HTTP_400_BAD_REQUEST)
-                elif tasks:
-                    attendance_obj.tasks = tasks
-                    # Assuming default check-out time is current time
-                    attendance_obj.check_out = datetime.now() 
+                    return Response({'error': 'Already checked out'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    # Update attendance details
+                    attendance_obj.todays_tasks = todays_tasks
+                    attendance_obj.tomorrow_tasks = tomorrow_tasks
+                    attendance_obj.today_tasks_status = today_tasks_status
+                    attendance_obj.check_out = timezone.now()  # Save checkout time
                     attendance_obj.save()
                     return Response({"message": "Checkout successful"})
-                else:
-                    return Response({'error': 'Tasks not provided'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({'error': 'No check-in found for today'}, status=status.HTTP_400_BAD_REQUEST)
         except Attendance.DoesNotExist:
             return Response({'error': 'No check-in found for today'}, status=status.HTTP_400_BAD_REQUEST)
-    
-
 
 
 class Attendance_history(APIView):
