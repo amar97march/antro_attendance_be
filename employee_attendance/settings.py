@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from datetime import timedelta
+import os
+
+from datetime import timedelta 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -23,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-&!=q&3%0sfepb2f%#oy=m)a^70=2e^7ypt9ona4efjq-vfexl3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = "employee.User"
@@ -32,6 +33,7 @@ AUTH_USER_MODEL = "employee.User"
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,6 +47,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -52,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'employee.middleware.IPAddressRestrictionMiddleware',
 ]
 
 ROOT_URLCONF = 'employee_attendance.urls'
@@ -90,9 +95,9 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'emdb',
-       'USER': 'emuser',
-       'PASSWORD': '123456',
+       'NAME': 'attendance_db',
+       'USER': 'emp_user',
+       'PASSWORD': 'ghdsl#523jgs',
        'HOST': 'localhost',
        'PORT': '5432',
    }
@@ -134,13 +139,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# settings.py
 
-SIMPLLE_JWT = {
+SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME' : timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME' : timedelta(days=7)
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
