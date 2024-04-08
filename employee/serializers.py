@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from .models import Attendance, User, Holiday
 from datetime import datetime
 
 class UserSerializer(serializers.ModelSerializer):
@@ -53,8 +53,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attendance
-        fields = ['user','email', 'first_name','last_name','date','check_in', 'check_out', 'todays_tasks','tomorrow_tasks','today_tasks_status']
-        read_only_fields = [ 'user','email', 'first_name','last_name','date', 'check_in', 'check_out', 'todays_tasks','tomorrow_tasks','today_tasks_status']
+        fields = ['user','email', 'first_name','last_name','date','check_in', 'check_out', 'todays_tasks','tomorrow_tasks']
+        read_only_fields = [ 'user','email', 'first_name','last_name','date', 'check_in', 'check_out', 'todays_tasks','tomorrow_tasks']
     def create(self, validated_data):
         validated_data['check_out'] = datetime.now()  # Set default check_out time
         return super().create(validated_data)

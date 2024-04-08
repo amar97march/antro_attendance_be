@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-&!=q&3%0sfepb2f%#oy=m)a^70=2e^7ypt9ona4efjq-vfexl3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 AUTH_USER_MODEL = "employee.User"
@@ -33,6 +33,7 @@ AUTH_USER_MODEL = "employee.User"
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -92,9 +95,9 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',
-       'NAME': 'empdb',
-       'USER': 'empdbuser',
-       'PASSWORD': 'password',
+       'NAME': 'attendance_db',
+       'USER': 'emp_user',
+       'PASSWORD': 'ghdsl#523jgs',
        'HOST': 'localhost',
        'PORT': '5432',
    }
@@ -148,16 +151,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # settings.py
 
-# Configure JWT access token expiration time
-# By default, it's set to expire in 15 minutes
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7)
-    # Add other settings as needed
+    'ACCESS_TOKEN_LIFETIME' : timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME' : timedelta(days=7)
 }
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7)
-    # Add other settings as needed
-}
+CORS_ALLOW_ALL_ORIGINS = True

@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser,AbstractUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 # from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -60,14 +60,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     Custom user model representing a user of the application.
     """
     # username = models.CharField(max_length=150, unique=True)
-   
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     employee_id = models.CharField(max_length=100, unique=True)
     department = models.CharField(max_length=100)
     position = models.CharField(max_length=100)
-    hire_date = models.DateField()
+    hire_date = models.DateField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -99,3 +98,23 @@ class Attendance(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.date}"
+    
+
+class Holiday(models.Model):
+    date = models.DateField()
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+
+# class Employee(models.Model):
+#     employee_id = models.CharField(max_length=20, unique=True)
+#     working_hours = models.DecimalField(max_digits=5, decimal_places=2)
+
+
+class AllowedIP(models.Model):
+    ip = models.GenericIPAddressField()
+    def __str__(self):
+        return self.ip
